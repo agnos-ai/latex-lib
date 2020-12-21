@@ -15,7 +15,12 @@ if(! $ENV{REPOSITORY_NAME}) {
 } else {
     $repoName = $ENV{REPOSITORY_NAME};
 }
-print "Repository name: ${repoName}";
+print "Repository name: ${repoName}\n";
+
+if (-e '${repoName}/${repoName}.tex') {
+    $ENV{latex_document_main} = '${repoName}/${repoName}.tex';
+    print "${repoName}/${repoName}.tex exists, using that as the main file";
+}
 
 if(! $ENV{latex_document_main}) {
     @default_files = ('content/main.tex');
@@ -126,19 +131,35 @@ if("$ENV{latex_document_mode}" eq 'final') {
     $jobname = "$document_customer-${repoName}-$ENV{latex_document_mode}";
 }
 
-#
-# Process the VERSION file in the root directory of the repo. It should be a one-line file with the
-# major and minor version number separated by a dot. This code then adds the Github Actions run number
-# to it (taken from the environment variable GITHUB_RUN_NUMBER) or if you run latexmk locally it uses
-# your user id.
-#
-$versionFileName = 'VERSION';
-if(! open($versionFileHandle, '<:encoding(UTF-8)', $versionFileName)) {
-    warn "Could not open ${versionFileName} file";
-    exit;
+sub tchomp {
+    my $text = shift;
+
+    # Matching with the hex values for the various line separators
+    $text =~ s/^(.*?)(?:\x0D\x0A|\x0A|\x0D|\x0C|\x{2028}|\x{2029})/$1/s;
+    return $text;
 }
-$latex_document_version = <$versionFileHandle>;
-chop($latex_document_version);
+
+#
+# Process the VERSION file in the main content directory of the repo and if not found then check the root directory
+# of the repo. It should be a one-line file with the major and minor version number separated by a dot.
+# This code then adds the Github Actions run number to it (taken from the environment variable GITHUB_RUN_NUMBER) or
+# if you run latexmk locally it uses your user id.
+#
+sub readVersion {
+    my $versionFileName = "./${repoName}/VERSION";
+    if (! -s $versionFileName) {
+        print "Could not find ${versionFileName}, so using ./VERSION\n";
+        $versionFileName = 'VERSION';
+    }
+    open my $versionFileHandle, '<', $versionFileName or die "Failed to open ${versionFileName}: $!\n";
+    my ($version, @lines) = <$versionFileHandle>;
+    close $versionFileHandle or die "Failed to close ${versionFileName}: $!\n";
+    $version = tchomp($version);
+    $version = tchomp($version);
+    return $version;
+}
+
+$latex_document_version = readVersion();
 # Create a var with the version number where dots are replaced with dashes because some LaTeX tools such
 # as makeindex do not work properly when there are dots in the job name.
 $versionWithDashes = $latex_document_version;
@@ -151,7 +172,7 @@ if (! $ENV{GITHUB_RUN_NUMBER}) {
     $latex_document_version = "${latex_document_version}.$ENV{GITHUB_RUN_NUMBER}";
     $versionWithDashes = "${versionWithDashes}-$ENV{GITHUB_RUN_NUMBER}";
 }
-print "Document Version: $latex_document_version\n";
+print "Document Version: $latex_document_version...\n";
 
 $pre_tex_code = "${pre_tex_code}\\def\\customerCode{$ENV{latex_customer_code}}";
 $pre_tex_code = "${pre_tex_code}\\def\\documentVersion{$latex_document_version}";
