@@ -22,10 +22,10 @@ if (-e '${repoName}/${repoName}.tex') {
     print "${repoName}/${repoName}.tex exists, using that as the main file";
 }
 
-if(! $ENV{latex_document_main}) {
-    @default_files = ('content/main.tex');
-} else {
+if($ENV{latex_document_main}) {
     @default_files = ($ENV{latex_document_main});
+} else {
+    @default_files = ('content/main.tex');
 }
 foreach (@default_files) {
   print "Main file: $_\n";
