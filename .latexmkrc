@@ -219,13 +219,12 @@ if("$ENV{latex_document_mode}" eq 'final') {
 } else {
     $jobname = "$document_customer_code-${mainDocName}-$ENV{latex_document_mode}";
 }
+# 
+# Remove duplicate customer codes
+# 
+$jobname =~ s/${document_customer_code}-${document_customer_code}/${document_customer_code}/g ;
 
 $latex_document_version = readVersion();
-# Create a var with the version number where dots are replaced with dashes because some LaTeX tools such
-# as makeindex do not work properly when there are dots in the job name.
-$versionWithDashes = $latex_document_version;
-$versionWithDashes =~ tr/./-/;
-
 $latex_document_version_suffix = getVersionSuffix();
 $latex_document_version = "${latex_document_version}${latex_document_version_suffix}";
 $versionWithDashes = $latex_document_version;
@@ -237,13 +236,17 @@ $pre_tex_code = "${pre_tex_code}\\def\\documentVersion{$latex_document_version}"
 $pre_tex_code = "${pre_tex_code}\\def\\DocumentClassOptions{$ENV{latex_document_mode}}";
 
 if($ENV{latex_document_members_only} and "$ENV{latex_document_members_only}" eq 'yes') {
-    $jobname = "${jobname}-members-only";
-    $jobname = "${jobname}-${versionWithDashes}";
+    $jobname = "${jobname}-members-only-${latex_document_version}";
     $pre_tex_code = "${pre_tex_code}\\def\\membersOnly{yes} "
 } else {
-    $jobname = "${jobname}-${versionWithDashes}";
+    $jobname = "${jobname}-${latex_document_version}";
     $pre_tex_code = "${pre_tex_code}\\def\\membersOnly{no} "
 }
+#
+# Remove all dots from the latex job name since utilities like makeindex cannot handle them
+# well.
+#
+$jobname =~ tr/./-/s;
 
 print "Job name: ${jobname}\n";
 print "pre_tex_code: ${pre_tex_code}\n";
@@ -252,4 +255,4 @@ $lualatex = 'lualatex --output-format=pdf --shell-escape --halt-on-error -file-l
 
 print "\n\n$lualatex\n\n";
 
-exit;
+# exit;
