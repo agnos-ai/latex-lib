@@ -223,6 +223,7 @@ if("$ENV{latex_document_mode}" eq 'final') {
 # Remove duplicate customer codes
 # 
 $jobname =~ s/${document_customer_code}-${document_customer_code}/${document_customer_code}/g ;
+$jobname =~ s/-${document_customer_code}-/-/g ;
 
 $latex_document_version = readVersion();
 $latex_document_version_suffix = getVersionSuffix();
