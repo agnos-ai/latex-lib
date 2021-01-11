@@ -19,32 +19,32 @@ $postscript_mode = $dvi_mode = 0;
 $pdf_previewer = 'open -a Skim';
 
 sub findMainDoc() {
-    my $mainDocName = 'ekg-mm';
-    my $mainDocFileName = "${mainDocName}/ekg-mm.tex";
+    my $document_name = 'ekg-mm'; # just a default, could be anything
+    my $document_file = "${document_name}/${document_name}.tex";
 
     if($ENV{'latex_document_main'}) {
-        $mainDocFileName = $ENV{'latex_document_main'};
+        $document_file = $ENV{'latex_document_main'};
         # If the env var latex_document_main happens to be just the directory name of the
         # document's content root then assume that the main file in that root has the same name
-        if (-d $mainDocFileName) {
-            $documentName = $mainDocFileName;
-            $mainDocFileName = $mainDocFileName . '/' . ${mainDocFileName} . '.tex';
-        } elsif (-f $mainDocFileName) {
-            my @array = split /\//, $mainDocFileName, 2;
-            $documentName = $array[0];
+        if (-d $document_file) {
+            $document_name = $document_file;
+            $document_file = $document_file . '/' . ${document_file} . '.tex';
+        } elsif (-f $document_file) {
+            my @array = split /\//, $document_file, 2;
+            $document_name = $array[0];
         }
     }
 
-    if (! -e $mainDocFileName) {
-        die "${mainDocFileName} does not exist"
+    if (! -e $document_file) {
+        die "${document_file} does not exist"
     }
-    $ENV{'latex_document_main'} = $mainDocFileName;
-    @default_files = ($mainDocFileName);
+    $ENV{'latex_document_main'} = $document_file;
+    @default_files = ($document_file);
 
-    print "Main document file name: ${mainDocFileName}\n";
+    print "Main document file: ${document_file}\n";
     print "Main document name: ${document_name}\n";
 
-    return ($mainDocFileName, $documentName);
+    return ($document_file, $document_name);
 }
 
 sub getCustomerCode() {
@@ -102,7 +102,7 @@ sub tchomp {
 sub readVersion {
     my $versionFileName = "./${document_name}/VERSION";
     if (-s $versionFileName) {
-        $mainDocFileName = $document_name;
+        $document_file = $document_name;
     } else {
         print "Could not find ${versionFileName}, so using ./VERSION\n";
         $versionFileName = 'VERSION';
@@ -179,7 +179,7 @@ sub glo2gls {
 #    makeglossaries($_[0], 'old', 'odn');
 #}
 
-($mainDocFileName, $document_name) = findMainDoc();
+($document_file, $document_name) = findMainDoc();
 
 $do_cd = 1;
 $out_dir = '../out';
@@ -227,9 +227,9 @@ $latex_document_mode = lc($ENV{'latex_document_mode'} || 'draft');
 print "latex_document_mode=${latex_document_mode}";
 if("${latex_document_mode}" eq 'final') {
     print "We're not in draft mode, creating the final version\n";
-    $jobname = "$document_customer_code-${mainDocName}";
+    $jobname = "$document_customer_code-${document_name}";
 } else {
-    $jobname = "$document_customer_code-${mainDocName}-${latex_document_mode}";
+    $jobname = "$document_customer_code-${document_name}-${latex_document_mode}";
 }
 #
 # Remove duplicate customer codes
