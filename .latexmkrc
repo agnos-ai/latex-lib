@@ -173,6 +173,7 @@ sub makeGlossaries{
     return 0;
 }
 
+
 #
 # Acronym Glossary "acronym" (./acronym.tex)
 #
