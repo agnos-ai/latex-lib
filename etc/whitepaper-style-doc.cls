@@ -116,7 +116,7 @@
 %
 % Insert the following at the end of the document
 %
-%\AtEndDocument{\global\expandafter\let \csname @nodocument\endcsname \relax\insertPrintGlossary} % \insertPrintGlossary is defined in glossary-stuff.cls
+\AtEndDocument{\global\expandafter\let \csname @nodocument\endcsname \relax\insertPrintGlossary} % \insertPrintGlossary is defined in glossary-stuff.cls
 \AtEndDocument{\global\expandafter\let \csname @nodocument\endcsname \relax\insertPrintBibliography}
 \AtEndDocument{\global\expandafter\let \csname @nodocument\endcsname \relax\insertPrintIndex}
 \AtEndDocument{\global\expandafter\let \csname @nodocument\endcsname \relax\insertPrintTodos}
