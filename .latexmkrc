@@ -25,11 +25,6 @@ $log_wrap = 2000;
 $ENV{'error_line'} = 254;
 $ENV{'half_error_line'} = 238;
 $ENV{'openout_any'} = 'a';
-#$out_dir = '../out';
-#$aux_dir = $out_dir;
-#$tmpdir  = $out_dir;
-#$ENV{'TEXINPUTS'} = ".:${out_dir}/:$ENV{'TEXINPUTS'}";
-#$biber = "biber %O --output_directory=${out_dir} --bblencoding=utf8 -u -U --output_safechars %B";
 $biber = "biber %O --bblencoding=utf8 -u -U --output_safechars %B";
 #
 # Specify which PDF viewer you want to use (Skim is the best one on a Mac)
@@ -164,41 +159,37 @@ sub getVersionSuffix() {
 
 ($document_file, $document_name) = findMainDoc();
 
+sub makeGlossaries{
+    my ($base_name, $path) = fileparse( $_[0] );
+    print "makeGlossaries base_name=${base_name} path=${path}\n";
+    pushd $path;
+    my $return = system "makeglossaries $base_name";
+    if (-z "${base_name}.glo" ) {
+       open GLS, ">${base_name}.gls";
+       close GLS;
+    }
+    popd;
+#    return $return;
+    return 0;
+}
 
 #
 # Acronym Glossary "acronym" (./acronym.tex)
 #
 # 'alg', 'acr', 'acn'
 #
-add_cus_dep( 'acn', 'acr', 0, 'makeAcronymGlossary' );
+add_cus_dep('acn', 'acr', 0, 'makeGlossaries');
 $clean_ext .= " alg acr acn";
-sub makeAcronymGlossary{
-    my ($base_name, $path) = fileparse( $_[0] );
-    print "makeAcronymGlossary ${basename}\n";
-    pushd $path;
-    my $return = system "makeglossaries $base_name";
-    popd;
-    return $return;
-#    system( "makeglossaries $_[0]");
-    #system( "makeindex -s \"$_[0].ist\" -t \"$_[0].alg\" -o \"$_[0].acr\" \"$_[0].acn\"" );
-}
+push @generated_exts, 'alg', 'acr', 'acn';
 
 #
 # Main Glossary "main" (./glossary-main.tex)
 #
 # 'glg', 'gls', 'glo'
 #
+add_cus_dep('glo', 'gls', 0, 'makeGlossaries');
 $clean_ext .= " glg gls glo";
-add_cus_dep('glo', 'gls', 0, 'makeMainGlossary');
-sub makeMainGlossary{
-    my ($base_name, $path) = fileparse( $_[0] );
-    print "makeMainGlossary ${base_name}\n";
-    pushd $path;
-    my $return = system "makeglossaries $base_name";
-    popd;
-    return $return;
-  #system( "makeindex -s \"$_[0].ist\" -t \"$_[0].glg\" -o \"$_[0].gls\" \"$_[0].glo\"" );
-}
+push @generated_exts, 'glg', 'gls', 'glo';
 
 #
 # Ontologies Glossary "ont" (./glossary-ontologies.tex)
@@ -207,17 +198,9 @@ sub makeMainGlossary{
 #
 # Also see statement: \newglossary[olg]{ont}{old}{odn}{Ontologies}
 #
-add_cus_dep( 'oln', 'old', 0, 'makeOntologiesGlossary' );
+add_cus_dep('oln', 'old', 0, 'makeGlossaries');
 $clean_ext .= " olg old odn";
-sub makeOntologiesGlossary{
-    my ($base_name, $path) = fileparse( $_[0] );
-    print "makeOntologiesGlossary ${base_name}\n";
-    pushd $path;
-    my $return = system "makeglossaries $base_name";
-    popd;
-    return $return;
-  #system( "makeindex -s \"$_[0].ist\" -t \"$_[0].olg\" -o \"$_[0].old\" \"$_[0].odn\"" );
-}
+push @generated_exts, 'olg', 'old', 'odn';
 
 #
 # Business Glossary "bus" (./glossary-business.tex)
@@ -226,21 +209,11 @@ sub makeOntologiesGlossary{
 #
 # Also see statement: \newglossary[tlg]{bus}{tld}{tdn}{Business Terms}
 #
-add_cus_dep( 'tdn', 'tld', 0, 'makeOntologiesGlossary' );
+add_cus_dep('tdn', 'tld', 0, 'makeGlossaries');
 $clean_ext .= " tlg tld tdn";
-sub makeBusinessGlossary{
-    my ($base_name, $path) = fileparse( $_[0] );
-    print "makeBusinessGlossary: ${base_name}\n";
-    pushd $path;
-    my $return = system "makeglossaries $base_name";
-    popd;
-    return $return;
-  #system( "makeindex -s \"$_[0].ist\" -t \"$_[0].tlg\" -o \"$_[0].tld\" \"$_[0].tdn\"" );
-}
+push @generated_exts, 'tlg', 'tld', 'tdn';
 
-$clean_ext .= " aux fls log glsdefs tdo";
-
-# print "clean ext: ${clean_ext}\n";
+$clean_ext .= " aux fls log glsdefs tdo ist run.xml xdy";
 
 ($document_customer_code, $document_customer_code_short) = getCustomerCode();
 
@@ -288,11 +261,8 @@ $jobname =~ tr/./-/s;
 
 print "Job name: ${jobname}\n";
 
-#$lualatex = "lualatex --synctex=1 --output_directory=${out_dir} --output-format=pdf --shell-escape --halt-on-error -file-line-error --interaction=nonstopmode %O %P";
 $lualatex = "lualatex --synctex=1 --output-format=pdf --shell-escape --halt-on-error -file-line-error --interaction=nonstopmode %O %P";
 
 @generated_exts = (@generated_exts, 'synctex.gz');
 
 print "\n\n$lualatex\n\n";
-
-# exit;
