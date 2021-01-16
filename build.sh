@@ -102,7 +102,6 @@ function runLaTex() {
       --file-line-error \
       --interaction=nonstopmode \
       --recorder \
-      --output-directory="../out" \
       --jobname "${jobName}" \
       ${skipGeneratingPdf} ${latexCommand} | \
       grep -v "LaTeX Warning: Reference .* on page .* undefined on input line .*" | \
@@ -118,7 +117,6 @@ function runLaTex() {
       --file-line-error \
       --interaction=nonstopmode \
       --recorder \
-      --output-directory="../out" \
       --jobname "${jobName}" \
       ${skipGeneratingPdf} ${latexCommand}
   fi
@@ -144,13 +142,11 @@ function runBiber() {
   echo "*******************"
   echo "******************* biber ${jobName}"
   echo "*******************"
-  if [[ ! -f "../out/${jobName}.bcf" ]] ; then
+  if [[ ! -f "${jobName}.bcf" ]] ; then
     echo "Not running Biber because there's no ${jobName}.bcf file"
     echo "******************* biber did not run on ${jobName}"
   else
     (
-      cd ../out
-      set -x
       biber --debug --noconf ${jobName}
     )
     local rc=$?
@@ -178,7 +174,7 @@ function runMakeGlossaries() {
 #    echo "No need to run makeglossaries"
 #    echo "******************* makeglossaries did not need to run on ${file}"
 #  else
-    makeglossaries -d ../out "${jobName}"
+    makeglossaries "${jobName}"
     rc=$?
     echo "******************* makeglossaries rc=${rc} ${jobName}"
 #  fi
@@ -199,8 +195,6 @@ function runMakeIndex() {
   echo "******************* makeindex ${jobName}"
   echo "*******************"
   (
-    cd ../out
-    set +x
     makeindex -t ${jobName}.ilg -o ${jobName}.ind ${jobName}.idx
   )
   local rc=$?
@@ -217,7 +211,7 @@ function runPandoc() {
   local -r documentName="$(documentName "${file}")"
   local -r version="$(version "${file}")"
   local -r jobName=$(jobName "${customerCode}" "${mode}" "${documentName}" "${version}")
-  local -r docxFile="../out/${file/.tex/.pandoc.docx}"
+  local -r docxFile="${file/.tex/.pandoc.docx}"
 
   rm -f "${docxFile}" >/dev/null 2>&1
 
@@ -446,6 +440,8 @@ function docxOutputFileName() {
 
 function copyToOut() {
 
+  return 0
+
   local -r mode="$1"
   local -r customerCode="$2"
   local -r file="$3.tex"
@@ -454,7 +450,7 @@ function copyToOut() {
   local -r jobName=$(jobName "${customerCode}" "${mode}" "${documentName}" "${version}")
 
   local -r customerCodeInFileName="$(getCustomerCodeInFileName "${customerCode}")"
-  local -r pandocDocxFile="../out/${file}.pandoc.docx"
+  local -r pandocDocxFile="${file}.pandoc.docx"
 
   if [[ ! -f "${mainFile}.pdf" ]] ; then
     echo "ERROR: Could not find ${mainFile}.pdf"
