@@ -54,7 +54,7 @@
 \RequirePackage{index-stuff}
 \RequirePackage{picture-stuff}
 
-\providecommand{\customerCode}{agnos}% set the default
+\providecommand{\customerCode}{agnos-ai}% set the default
 
 \ifthenelse{\equal{\customerCode}{somecust}}
 {\RequirePackage{header-and-footer-stuff-somecust}}
@@ -74,7 +74,6 @@
 \RequirePackage{glossary-stuff}
 \RequirePackage{bibliography-stuff}
 \RequirePackage{version-history-stuff}
-
 
 %
 % Quotations
@@ -110,7 +109,7 @@
 %
 % Insert the following at the beginning of the document
 %
-\AtBeginDocument{\global\expandafter\let \csname @nodocument\endcsname \relax\insertGlossaries{}\typeout{Inserting Glossary}}
+% \AtBeginDocument{\global\expandafter\let \csname @nodocument\endcsname \relax\insertGlossaries{}\typeout{Inserting Glossary}}
 \AtBeginDocument{\global\expandafter\let \csname @nodocument\endcsname \relax\insertTitlePage{}\typeout{Inserting Title Page}}
 \AtBeginDocument{\global\expandafter\let \csname @nodocument\endcsname \relax\insertTableOfContents{}\typeout{Inserting Table of Contents}}
 %

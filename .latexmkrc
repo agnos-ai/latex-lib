@@ -60,8 +60,11 @@ sub findMainDoc() {
     return ($document_file, $document_name);
 }
 
-sub getCustomerCode() {
+sub getCustomerCode($) {
 
+    my $document_name = $_[0];
+    my $document_name_suffix = (split '-', $document_name)[-1];
+    my $document_name_prefix = (split '-', $document_name)[0];
     my $defaultCustomerCode = 'ekgf';
 
     # If this runs in a Github Actions workflow then we can derive the best
@@ -77,14 +80,21 @@ sub getCustomerCode() {
             $defaultCustomerCode = lc($array[-2]);
         }
     }
+
+    if (-d "./customer-assets/${document_name_prefix}") {
+        $defaultCustomerCode = ${document_name_prefix};
+        $ENV{'latex_customer_code'} = $defaultCustomerCode;
+    }
+    if (-d "./customer-assets/${document_name_suffix}") {
+        $defaultCustomerCode = ${document_name_suffix};
+        $ENV{'latex_customer_code'} = $defaultCustomerCode;
+    }
     if (! $ENV{'latex_customer_code'}) {
         $ENV{'latex_customer_code'} = $defaultCustomerCode;
     }
-
     if("$ENV{'latex_customer_code'}" eq 'agnos') {
         $ENV{'latex_customer_code'} = 'agnos-ai'
     }
-
     if("$ENV{'latex_customer_code'}" eq 'agnos-ai') {
         $document_customer = 'agnos-ai';
         $document_customer_code_short = 'agnos';
@@ -216,13 +226,13 @@ push @generated_exts, 'tlg', 'tld', 'tdn';
 
 $clean_ext .= " aux fls log glsdefs tdo ist run.xml xdy";
 
-($document_customer_code, $document_customer_code_short) = getCustomerCode();
+($document_customer_code, $document_customer_code_short) = getCustomerCode(${document_name});
 
 #
 # Can't use spaces or dots in the file names unfortunately, tools like makeglossaries do not support it
 #
 $latex_document_mode = lc($ENV{'latex_document_mode'} || 'draft');
-print "latex_document_mode=${latex_document_mode}";
+print "Document Mode: ${latex_document_mode}\n";
 if("${latex_document_mode}" eq 'final') {
     print "We're not in draft mode, creating the final version\n";
     $jobname = "$document_customer_code-${document_name}";
@@ -232,8 +242,13 @@ if("${latex_document_mode}" eq 'final') {
 #
 # Remove duplicate customer codes
 #
-$jobname =~ s/${document_customer_code}-${document_customer_code}/${document_customer_code}/g ;
-$jobname =~ lc s/-${document_customer_code}-/-/g ;
+#print "document_customer_code=${document_customer_code}\n";
+$jobname =~ s/${document_customer_code}//g ;
+$jobname =~ s/--/-/g ;
+#print "jobname=${jobname}\n";
+$jobname = "${document_customer_code}${jobname}" ;
+#print "jobname=${jobname}\n";
+#die "xxx";
 
 $latex_document_version = readVersion();
 $latex_document_version_suffix = getVersionSuffix();
