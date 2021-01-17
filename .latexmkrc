@@ -245,10 +245,8 @@ if("${latex_document_mode}" eq 'final') {
 #print "document_customer_code=${document_customer_code}\n";
 $jobname =~ s/${document_customer_code}//g ;
 $jobname =~ s/--/-/g ;
-#print "jobname=${jobname}\n";
 $jobname = "${document_customer_code}${jobname}" ;
-#print "jobname=${jobname}\n";
-#die "xxx";
+$jobname =~ s/--/-/g ;
 
 $latex_document_version = readVersion();
 $latex_document_version_suffix = getVersionSuffix();
@@ -274,8 +272,10 @@ if($ENV{'latex_document_members_only'} and "$ENV{'latex_document_members_only'}"
 # well.
 #
 $jobname =~ tr/./-/s;
+$jobname =~ s/--/-/g ;
 
 print "Job name: ${jobname}\n";
+#die "xxx";
 
 $lualatex = "lualatex --synctex=1 --output-format=pdf --shell-escape --halt-on-error -file-line-error --interaction=nonstopmode %O %P";
 
