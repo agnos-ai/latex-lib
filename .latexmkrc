@@ -257,10 +257,10 @@ $versionWithDashes = $latex_document_version;
 $versionWithDashes =~ tr/./-/s;
 print "Document Version: $latex_document_version...\n";
 
+$pre_tex_code = "${pre_tex_code}\\def\\documentMode{${latex_document_mode}}";
 $pre_tex_code = "${pre_tex_code}\\def\\documentName{$document_name}";
 $pre_tex_code = "${pre_tex_code}\\def\\customerCode{$document_customer_code}";
 $pre_tex_code = "${pre_tex_code}\\def\\documentVersion{$latex_document_version}";
-$pre_tex_code = "${pre_tex_code}\\def\\DocumentClassOptions{${latex_document_mode}}";
 
 if($ENV{'latex_document_members_only'} and "$ENV{'latex_document_members_only'}" eq 'yes') {
     $jobname = "${jobname}-members-only-${latex_document_version}";
@@ -279,6 +279,9 @@ print "Job name: ${jobname}\n";
 
 $lualatex = "lualatex --synctex=1 --output-format=pdf --shell-escape --halt-on-error -file-line-error --interaction=nonstopmode %O %P";
 
-@generated_exts = (@generated_exts, 'synctex.gz');
+push @generated_exts, 'synctex.gz';
+push @generated_exts, 'synctex(busy)';
+push @generated_exts, 'run.xml';
+$clean_ext .= " synctex.gz synctex(busy) run.xml";
 
 print "\n\n$lualatex\n\n";

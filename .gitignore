@@ -19,8 +19,7 @@
 *.out
 *.pdf
 *.run.xml
-*.synctex.gz
-*.synctex
+*.synctex*
 *.tdo
 *.sta
 *.gz
