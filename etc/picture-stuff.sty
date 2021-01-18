@@ -6,28 +6,13 @@
 
 \RequirePackage[final]{graphicx}% this package must be before svg
 %\RequirePackage{svg}
-\newcommand{\home}{/Users/jacobus/Work/kg-whitepaper}
+\newcommand{\home}{/Users/jacobus/Work/ekg-whitepaper}
 \providecommand{\transparent}[1]{} % see manual
 % \pdfsuppresswarningpagegroup=1 % hot fix if required, see manual
 \RequirePackage{relsize} % required for adjusting text using relscale
-\typeout{picture-stuff.sty: Customer Code: \customerCode}
-\typeout{picture-stuff.sty: Document Name: \documentName}
-\graphicspath{%
-{\home/images}%
-{\documentName/images}%
-{../\documentName/images}%
-{../../\documentName/images}%
-{images/}%
-{../images/}%
-{../../images/}%
-{../customer-assets/\customerCode/}%
-{../../customer-assets/\customerCode/}%
-}
-\makeatletter\typeout{picture-stuff.sty: Graphics Path: \Ginput@path}\makeatother
-%\svgpath{{\home/images}{images/}{../images/}}
-%\svgsetup{inkscapepath=\home}
+\RequirePackage{path-stuff}
 \RequirePackage{float}
-\RequirePackage{ifdraft}
+\RequirePackage[\documentMode]{ifdraft}
 \RequirePackage{changepage}
 
 \newcommand{\adjustimg}{% Horizontal adjustment of image
