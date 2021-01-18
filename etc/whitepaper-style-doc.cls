@@ -57,6 +57,8 @@
 \ExecuteOptionsX{}
 \ProcessOptionsX\relax
 
+\RequirePackage{path-stuff}% is dependent on \customerCode and \documentName
+
 %\ifthenelse{\equal{\documentClassOptionFinal}{final}}{\typeout{xxx}}{\typeout{yyy}}
 
 \typeout{whitepaper-style-doc.cls: jobname=\jobname}

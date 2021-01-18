@@ -60,10 +60,11 @@
 \pagenumbering{arabic}
 \clearpage\setcounter{page}{1}
 
-\makeatletter
-\providecommand*{\input@path}{}
-\edef\input@path{{./customer-assets/\customerCode/}{../customer-assets/\customerCode/}\input@path}% prepend
-\makeatother
+% this is already done in whitepaper-style-doc.cls:
+% \makeatletter
+% \providecommand*{\input@path}{}
+% \edef\input@path{{./customer-assets/\customerCode/}{../customer-assets/\customerCode/}\input@path}% prepend
+% \makeatother
 
 %%
 %% Load the somecust version of the header-and-footer-stuff
