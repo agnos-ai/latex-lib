@@ -227,11 +227,11 @@ $clean_ext .= " olg old odn";
 push @generated_exts, 'olg', 'old', 'odn';
 
 #
-# Business Glossary "bus" (./glossary-business.tex)
+# Concepts Glossary "concept" (./glossary-concepts.tex)
 #
 # 'tlg', 'tld', 'tdn'
 #
-# Also see statement: \newglossary[tlg]{bus}{tld}{tdn}{Business Terms}
+# Also see statement: \newglossary[tlg]{concept}{tld}{tdn}{Concepts}
 #
 add_cus_dep('tdn', 'tld', 0, 'makeGlossaries');
 $clean_ext .= " tlg tld tdn";
