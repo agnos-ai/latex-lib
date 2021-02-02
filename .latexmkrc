@@ -288,10 +288,10 @@ $pre_tex_code = "${pre_tex_code}\\def\\documentVersion{$latex_document_version}"
 
 if($ENV{'latex_document_members_only'} and "$ENV{'latex_document_members_only'}" eq 'yes') {
     $jobname = "${jobname}-members-only-${latex_document_version}";
-    $pre_tex_code = "${pre_tex_code}\\def\\membersOnly{yes} "
+    $pre_tex_code = "${pre_tex_code}\\def\\membersOnly{yes}"
 } else {
     $jobname = "${jobname}-${latex_document_version}";
-    $pre_tex_code = "${pre_tex_code}\\def\\membersOnly{no} "
+    $pre_tex_code = "${pre_tex_code}\\def\\membersOnly{no}"
 }
 #
 # Remove all dots from the latex job name since utilities like makeindex cannot handle them
