@@ -151,7 +151,10 @@ sub readVersion {
     } elsif (-f "./VERSION") {
         $versionFileName = "./VERSION";
     } else {
-        die "Could not find VERSION file";
+        $versionFileName = "./${document_name}/VERSION";
+        open(my $fh, '>', $versionFileName) or die "Could not open file ${$versionFileName} $!";
+        print $fh "1.0\n";
+        close $fh;
     }
     open my $versionFileHandle, '<', $versionFileName or die "Failed to open ${versionFileName}: $!\n";
     my ($version, @lines) = <$versionFileHandle>;
