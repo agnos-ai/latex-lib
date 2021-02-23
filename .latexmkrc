@@ -299,6 +299,7 @@ if($ENV{'latex_document_members_only'} and "$ENV{'latex_document_members_only'}"
 #
 $jobname =~ tr/./-/s;
 $jobname =~ s/--/-/g ;
+$jobname =~ s@/@-@g ;
 
 print "Job name: ${jobname}\n";
 

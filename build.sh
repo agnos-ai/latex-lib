@@ -325,7 +325,7 @@ function runInkScape() {
     echo "WARNING: Cannot convert SVG files to PDF and pdf_tex files because inkscape is not installed"
     if [[ "$(uname)" == Darwin ]] ; then
       echo "Installing Inkscape"
-      brew cask install inkscape
+      brew install --cask inkscape
       if ! command -v inkscape >/dev/null 2>&1 ; then
         echo "ERROR: Could not install inkscape"
         return 1
