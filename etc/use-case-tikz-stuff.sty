@@ -24,31 +24,44 @@
   }
 }
 
-\newif\ifisverticaltree\isverticaltreefalse
+%% Define the 'verticaltree' option
+\newif\ifverticaltree\verticaltreefalse
 
-%% Define your keys
-\pgfqkeys{/usecasetree declaration}{%
-  isverticaltree/.is if=isverticaltree,
+\pgfkeys{
+  /usecasetree declaration/.cd,
+  verticaltree/.is if=verticaltree
 }
 
+%% Define the 'compact' option
+\newif\ifcompact\compactfalse
+
+\pgfkeys{
+  /usecasetree declaration/.cd,
+  compact/.is if=compact
+}
+
+\newcommand{\bs}{\symbol{'134}}
+
 \newcommand{\usecasetree}[3][]{%
-  \typeout{usecasetree1: #1 aa #2}
-  \pgfqkeys{/usecasetree declaration}{%
+  \typeout{use-case-tikz-stuff.sty: \string\usecasetree[#1]:#2}
+  \pgfkeys{
+    /usecasetree declaration/.cd,
     % set the default values first
-    isverticaltree=false,%
-    % then set the given options like 'isverticaltree'
+    verticaltree=false,%
+    compact=false,%
+    % then set the given options like 'verticaltree' and 'compact'
     #1%
   }%
   \readUseCaseTitleFromFile{#2}%
   \edef\tmpUsecaseTitle{\usecaseTitle}% save in tmp var because #2 in tikzpicture calls out to readUseCaseTitleFromFile
-  \typeout{usecasetree: options=#1, label=#2, title=\tmpUsecaseTitle}%
+  \typeout{use-case-tikz-stuff.sty: options=#1, label=#2, title=\tmpUsecaseTitle}%
   \begin{figure}[H]%
     \setlength{\abovecaptionskip}{1pt}
     \setlength{\belowcaptionskip}{-0.0cm}
     \setlength{\fboxrule}{0pt}%
     \centering%
     \fboxsep = 10pt%
-    \ifisverticaltree%
+    \ifverticaltree%
       \fbox{\begin{tikzpicture}[
         layered layout,
         sibling distance=1cm,
