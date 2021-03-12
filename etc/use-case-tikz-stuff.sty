@@ -149,7 +149,7 @@
     \fi
     \caption{Use Case Tree: \usecaseTitle}%
     \label{#2-tree}%
-    \index{Use Case!\string\usecaseTitle}%
+    \index{use case!\string\usecaseTitle}%
   \end{figure}%
 %  \typeout{HHHHHHHHHHH 4}
 }
@@ -177,14 +177,14 @@
   \ifhaspageref%
     \typeout{use-case-tikz-stuff.sty: declaring TikZ node \usecaseLabelNoPrefix{#2} with page ref}
     \node[rectangle split, rectangle split parts=2] (\usecaseLabelNoPrefix{#2}) {%
-      \usecaseTitle\index{Use Case!\usecaseTitle}%
+      \usecaseTitle\index{use case!\usecaseTitle}%
       \nodepart{two}{%
         \tiny Page ~\pageref{#2}%
       }%
     }%
   \else%
     \typeout{use-case-tikz-stuff.sty: declaring TikZ node \usecaseLabelNoPrefix{#2}}
-    \node (\usecaseLabelNoPrefix{#2}) {\usecaseTitle\index{Use Case!\usecaseTitle}}%
+    \node (\usecaseLabelNoPrefix{#2}) {\usecaseTitle\index{use case!\usecaseTitle}}%
   \fi%
   ;%
 }
