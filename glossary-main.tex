@@ -41,57 +41,6 @@
     quality of the data in the data stores}
 }
 
-\newglossaryentry{ekg:platform}{
-    type=\glsdefaulttype,
-    name={EKG/Platform},
-    parent={ekg},
-    description={a system architecture concept that stands for the layer of software services that provide
-    and serve the \gls{ekg} to end-users and other systems.
-    }
-}
-
-\newglossaryentry{ekg:storage}{
-    type=\glsdefaulttype,
-    name={EKG/Storage},
-    text={EKG/Storage},
-    parent={ekg},
-    description={a system architecture concept that stands for the layer of data storage services such as a "Triplestore" or an
-    "Object Store" that serve the various other layers of a typical \gls{ekg} operation such as the \gls{ekg:platform} and the \glspl{ekg:dataops:pipeline}. }
-}
-
-\newglossaryentry{ekg:dataops}{
-    type=\glsdefaulttype,
-    name={EKG/DataOps},
-    text={EKG/DataOps},
-    parent={ekg},
-    description={..todo..}
-}
-
-\newglossaryentry{ekg:dataops:environment}{
-    type=\glsdefaulttype,
-    name={Environment},
-    text={EKG/DataOps Environment},
-    parent={ekg:dataops},
-    description={..todo..}
-}
-
-\newglossaryentry{ekg:dataops:pipeline}{
-    type=\glsdefaulttype,
-    name={Pipeline},
-    text={EKG/DataOps Pipeline},
-    parent={ekg:dataops},
-    description={a pipeline in the \gls{ekg:dataops:environment} is a series of programs, called "steps",
-    that are run in sequence where the first step captures data in any given format from a given source 
-    and the last step produces an output file in any given format.}
-}
-
-\newglossaryentry{ekg:monitoring}{
-    type=\glsdefaulttype,
-    name={EKG/Monitoring},
-    parent={ekg},
-    description={..todo..}
-}
-
 \newglossaryentry{bitemporality}{name={Bi-temporality},%
     type=\glsdefaulttype,%
     description={Bi-temporality is a feature of a system (or an Ontology) that allows for the recording of timestamps along two time lines:

@@ -84,6 +84,7 @@
 %
 \import{../../}{glossary.tex}
 \import{../../}{glossary-concepts.tex}
+\import{../../}{glossary-ekg.tex}
 \import{../../}{glossary-ontologies.tex}
 \importTitlePage
 \typeout{use-case-standalone A1}
