@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # WARNING: This script is being replaced by latexmk (and it's init file .latexmkrc). This script still works but
 #          is no longer supported and not used in Github Actions workflows.
@@ -53,10 +53,13 @@ function version() {
 
   if [[ -f "${dir}/VERSION" ]] ; then
     head -n1 "${dir}/VERSION" | tr . -
+  elif [[ -f "../VERSION" ]] ; then
+    head -n1 "../VERSION" | tr . -
   elif [[ -f "VERSION" ]] ; then
-    head -n1 VERSION | tr . -
+    head -n1 "VERSION" | tr . -
   else
-    echo "UNKNOWN VERSION"
+    echo "0.1" > "VERSION"
+    echo "0-1"
   fi
 }
 
@@ -73,20 +76,14 @@ function runLaTex() {
   local latexCommand="\def\customerCode{${customerCode}}"
 
   latexCommand+=" \def\documentName{${documentName}}"
-  latexCommand+=" \def\documentVersion{${version}}"
+  latexCommand+=" \def\documentVersion{${version//-/.}}"
 
   if [[ ${run} -eq 4 ]] ; then
     skipGeneratingPdf=""
   fi
 
-  if [[ "${mode}" == "draft" ]] ; then
-    latexCommand+="\def\DocumentClassOptions{} \input{"${file}'}'
-  elif [[ "${mode}" == "final" ]] ; then
-    latexCommand+="\def\DocumentClassOptions{final} \input{"${file}'}'
-  else
-    echo "ERROR: Unknown draft/final mode"
-    return 1
-  fi
+  latexCommand+="\def\documentMode{${mode}}"
+  latexCommand+="\input{"${file}'}'
 
   echo "*******************"
   echo "******************* lualatex run ${run} ${mode} ${customerCode} ${file}"
@@ -270,25 +267,30 @@ function runInkScapeOnSVGFile() {
   local -r svgFile="$(pwd)/$1"
   local -r pdfFile="${svgFile/.svg/.pdf}"
 
-  echo -n "Processing SVG file: ${svgFile}"
+  echo -n "InkScape: Processing SVG file: ${svgFile}" >&2
 
   if [[ ${svgFile} -ot ${pdfFile} ]] ; then
-    echo " was already done"
+    echo " was already done" >&2
     return 0
   fi
-  echo ""
+  echo "" >&2
 
   if [[ "$(uname)" == "Linux" ]] ; then
     #
     # Quick fix, run inkscape in dbus-run-session to avoid the ugly dbus messages (and it seems to speed up a little too)
     #
     if ! dbus-run-session inkscape "${svgFile}" -D --export-filename="${pdfFile}" --export-type="pdf" --export-latex ; then
-      echo "ERROR: Error occurred with inkscape ${svgFile}"
+      echo "ERROR: Error occurred with inkscape ${svgFile}" >&2
       return 1
     fi
   else
-    if ! inkscape "${svgFile}" -D --export-filename="${pdfFile}" --export-type="pdf" --export-latex ; then
-      echo "ERROR: Error occurred with inkscape ${svgFile}"
+    if ! inkscape "${svgFile}" \
+       --export-area-drawing \
+       --export-filename="${pdfFile}" \
+       --export-pdf-version=1.5 \
+       --export-type="pdf" \
+       --export-latex ; then
+      echo "ERROR: Error occurred with inkscape ${svgFile}" >&2
       return 1
     fi
   fi
@@ -300,18 +302,19 @@ function runInkScapeOnVSDXFile() {
 
   local -r vsdxFile="$1"
 
-  echo "Processing SVG file: ${vsdxFile}"
+  echo "InkScape: Processing VSDX file: ${vsdxFile}" >&2
+
   if [[ "$(uname)" == "Linux" ]] ; then
     #
     # Quick fix, run inkscape in dbus-run-session to avoid the ugly dbus messages (and it seems to speed up a little too)
     #
     if ! dbus-run-session inkscape "$(pwd)/${vsdxFile}" -D --export-filename="$(pwd)/${vsdxFile/.vsdx/.pdf}" --export-type="pdf" --export-latex ; then
-      echo "ERROR: Error occurred with inkscape $(pwd)/${vsdxFile}"
+      echo "ERROR: Error occurred with inkscape $(pwd)/${vsdxFile}" >&2
       return 1
     fi
   else
     if ! inkscape "$(pwd)/${vsdxFile}" -D --export-filename="$(pwd)/${vsdxFile/.vsdx/.pdf}" --export-type="pdf" --export-latex ; then
-      echo "ERROR: Error occurred with inkscape $(pwd)/${vsdxFile}"
+      echo "ERROR: Error occurred with inkscape $(pwd)/${vsdxFile}" >&2
       return 1
     fi
   fi
@@ -319,48 +322,18 @@ function runInkScapeOnVSDXFile() {
   return 0
 }
 
-function runInkScape() {
+function runInkScapeInDir() {
 
-  if ! command -v inkscape >/dev/null 2>&1 ; then
-    echo "WARNING: Cannot convert SVG files to PDF and pdf_tex files because inkscape is not installed"
-    if [[ "$(uname)" == Darwin ]] ; then
-      echo "Installing Inkscape"
-      brew install --cask inkscape
-      if ! command -v inkscape >/dev/null 2>&1 ; then
-        echo "ERROR: Could not install inkscape"
-        return 1
-      fi
-    else
-      return 0
+  local -r directory="$1"
+
+  (
+    if ! cd "${directory}" ; then
+      echo "ERROR: Could not find directory ${directory}" >&2
+      return 1
     fi
-  fi
+    echo "InkScape: checking directory $(pwd)" >&2
 
-  if ! cd images ; then
-    echo "ERROR: Could not find images directory"
-    return 1
-  fi
-
-  if ls -- *.svg >/dev/null 2>&1 ; then
-    for svgFile in *.svg ; do
-      runInkScapeOnSVGFile "${svgFile}" || return $?
-    done
-  fi
-  if ls -- *.vsdx >/dev/null 2>&1 ; then
-    for vsdxFile in *.vsdx ; do
-      runInkScapeOnVSDXFile "${vsdxFile}" || return $?
-    done
-  fi
-
-  cd ..
-
-  if ! cd customer-assets ; then
-    echo "ERROR: Could not find customer-assets directory"
-    return 1
-  fi
-
-  for customerAssetDir in $(ls -1 */ | grep '/:' | sed 's@/:@@') ; do
-    pushd ${customerAssetDir} >/dev/null 2>&1
-    if ls --  *.svg >/dev/null 2>&1 ; then
+    if ls -- *.svg >/dev/null 2>&1 ; then
       for svgFile in *.svg ; do
         [[ "xx${svgFile}xx" == "xx*.svgxx" ]] && continue
         runInkScapeOnSVGFile "${svgFile}" || return $?
@@ -372,12 +345,43 @@ function runInkScape() {
         runInkScapeOnVSDXFile "${vsdxFile}" || return $?
       done
     fi
-    popd >/dev/null 2>&1
-  done
 
-  cd ..
+    for subdir in $(ls -1F  | grep '/') ; do
+      runInkScapeInDir "./${subdir}" || return $?
+    done
 
-  return 0
+    return 0
+  )
+
+  return $?
+}
+
+function runInkScape() {
+
+  (
+    cd ..
+    echo "InkScape: Running InkScape, current directory is $(pwd)" >&2
+
+    if ! command -v inkscape >/dev/null 2>&1 ; then
+      echo "WARNING: Cannot convert SVG files to PDF and pdf_tex files because inkscape is not installed" >&2
+      if [[ "$(uname)" == Darwin ]] ; then
+        echo "InkScape: Installing..." >&2
+        brew install --cask inkscape
+        if ! command -v inkscape >/dev/null 2>&1 ; then
+          echo "ERROR: Could not install inkscape" >&2
+          return 1
+        fi
+      else
+        return 0
+      fi
+    fi
+
+    runInkScapeInDir . || return $?
+  )
+  local -r rc=$?
+  echo "InkScape: Done" >&2
+
+  return ${rc}
 }
 
 function getCustomerCodeInFileName() {
@@ -573,15 +577,29 @@ function runBuildForMode() {
 
   return 0
 }
+
+function defaultCustomerCode() {
+
+  local gitRepoOrgName="$(git config --get remote.origin.url | sed 's!^.*github.com[:/]\(.*\)/.*$!\1!g')"
+
+  gitRepoOrgName="${gitRepoOrgName,,}"
+
+  if [[ -n "${gitRepoOrgName}" ]] ; then
+    echo "${gitRepoOrgName}"
+    return 0
+  fi
+  echo "agnos.ai"
+}
+
 function runTheBuild() {
 
-  local customerCode="agnos"
+  local customerCode="$(defaultCustomerCode)"
 
   if [[ $# -lt 1 ]] ; then
     echo "Usage: $0 [--local] [--draft] [--final] [--skip-pandoc] [--open] [--customer <customer code>] <name of main doc>"
     echo ""
     echo "The --draft option is the default but if you want to both draft and final versions of the document then specify them both."
-    echo "The default customer code is ${customerCode}."
+    echo "The default customer code is \"${customerCode}\"."
     return 1
   fi
 
@@ -624,10 +642,13 @@ function runTheBuild() {
     fi
   done
 
-  mkdir -p "${SCRIPT_DIR}/out"
-
   local -r mainFile="$1"
   local    mainDir="${mainFile}"
+
+  if ! cd "${mainDir}" ; then
+    echo "ERROR: Directory ${mainDir} does not exist" >&2
+    return 1
+  fi
 
   if [[ ! -f "${mainDir}/${mainFile}.tex" ]] ; then
     if [[ ! -f "${mainFile}.tex" ]] ; then
@@ -681,6 +702,18 @@ function runTheBuild() {
   return $?
 }
 
+function openPdfForReal() {
+
+  local -r pdf="$1"
+
+  if [[ -d /Applications/Skim.app ]] ; then
+    open -a "Skim" "${pdf}"
+    return $?
+  fi
+
+  open "${pdf}"
+}
+
 function openPdf() {
 
   ((openThePdf)) || return 0
@@ -698,9 +731,11 @@ function openPdf() {
   local -r jobName=$(jobName "${customerCode}" "${mode}" "${documentName}" "${version}")
 
   if [[ -f "../out/${jobName}.pdf" ]] ; then
-    open "../out/${jobName}.pdf"
+    openPdfForReal "../out/${jobName}.pdf"
   elif [[ -f "${mainDir}/${jobName}.pdf" ]] ; then
-    open "${mainDir}/${jobName}.pdf"
+    openPdfForReal "${mainDir}/${jobName}.pdf"
+  elif [[ -f "../${mainDir}/${jobName}.pdf" ]] ; then
+    openPdfForReal "../${mainDir}/${jobName}.pdf"
   else
     echo "ERROR: Could not find ${jobName}.pdf"
     echo "mainDir=${mainDir}"
