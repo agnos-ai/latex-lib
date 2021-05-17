@@ -13,6 +13,7 @@ github_url_https="https://github.com/${github_repo}.git"
 github_url_ssh="git@github.com:${github_repo}.git"
 prefer_ssh=1
 subtree_dir="${remote_name}" # the directory into which the subtree repo will appear in your repo
+git_bin=""
 
 function checkGit() {
 
@@ -24,10 +25,17 @@ function checkGit() {
     echo "ERROR: You're not in the root directory of your git repo" >&2
     return 1
   fi
+  git_bin="$(command -v git 2>/dev/null)"
   #
   # TODO: Add more checks, right git version?
   #
   return 0
+}
+
+function git() {
+  echo "git $*"
+  "${git_bin}" $@
+  return $?
 }
 
 function getRemoteUrl() {
@@ -58,7 +66,7 @@ function addGitRemote() {
 }
 
 function getSubTrees() {
-  git log | grep git-subtree-dir | tr -d ' ' | cut -d ":" -f2 | sort | uniq
+  "${git_bin}" log | grep git-subtree-dir | tr -d ' ' | cut -d ":" -f2 | sort | uniq
 }
 
 function addSubtree() {
@@ -75,10 +83,14 @@ function addSubtree() {
 
 function pullLatest() {
 
-  echo "Pull Latest" >&2
+  local -r remote_name="$1"
+  local -r mount_point="$2"
+  local -r remote_branch="$3"
 
-  git fetch latex-lib || return $?
-  git subtree pull --prefix "${remote_name}" "${remote_name}" "$remote_branch" --squash
+  echo "Pull Latest ${remote_name} and mount at ${mount_point}" >&2
+
+  git fetch "${remote_name}" || return $?
+  git subtree pull --prefix "${mount_point}" "${remote_name}" "${remote_branch}" --squash
 }
 
 # https://unix.stackexchange.com/a/521984
@@ -207,7 +219,14 @@ function main() {
 
   createSymlinks || return $?
 
-  pullLatest || return $?
+  pullLatest latex-lib latex-lib main || return $?
+
+  if [[ -d mnt/ekg-manifesto ]] ; then
+    pullLatest ekg-manifesto mnt/ekg-manifesto main || return $?
+  fi
+  if [[ -d mnt/ekg-mm ]] ; then
+    pullLatest ekg-mm mnt/ekg-mm main || return $?
+  fi
 
   return 0
 }
