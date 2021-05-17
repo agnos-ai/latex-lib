@@ -15,8 +15,8 @@
   \RequirePackage{xurl}% has to be loaded before the hyperref package
 \fi
 
-\RequirePackage{csquotes}
 \RequirePackage[american]{babel}
+\RequirePackage[strict=true,autostyle=tryonce,english=american,maxlevel=2]{csquotes}
 \RequirePackage{import}
 \RequirePackage{parskip}
 \RequirePackage{subcaption}
@@ -60,6 +60,8 @@
 % \apptocmd{\@chapter}{\gdef\currentname{#1\xspace}}{}{}
 % \apptocmd{\@sect}{\gdef\currentname{#7\xspace}}{}{}
 % \makeatother
+
+\newcommand*{\fullref}[1]{\hyperref[{#1}]{\textit{\ref*{#1}~\nameref{#1}}}}
 
 %
 % Produce a reference to another chapter in another "book". If that chapter is available in the same book then
