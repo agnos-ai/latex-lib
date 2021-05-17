@@ -37,7 +37,7 @@ function jobName() {
   local -r customerCode="$1"
   local -r mode="$2"
   local -r documentName="$3"
-  local -r version="$4"
+  local -r version="${4//./-}"
 
   echo -n "${customerCode}-${documentName}"
 
@@ -50,17 +50,25 @@ function version() {
 
   local -r file="$1"
   local -r dir=$(dirname "${file}")
+  local version=''
 
   if [[ -f "${dir}/VERSION" ]] ; then
-    head -n1 "${dir}/VERSION" | tr . -
+    version="$(head -n1 "${dir}/VERSION")"
   elif [[ -f "../VERSION" ]] ; then
-    head -n1 "../VERSION" | tr . -
+    version="$(head -n1 "../VERSION")"
   elif [[ -f "VERSION" ]] ; then
-    head -n1 "VERSION" | tr . -
+    version="$(head -n1 "VERSION")"
   else
     echo "0.1" > "VERSION"
-    echo "0-1"
+    version="0.1"
   fi
+
+  if [[ -z "${GITHUB_RUN_NUMBER}" ]] ; then
+    version+=".${USER}"
+  else
+    version+=".${GITHUB_RUN_NUMBER}"
+  fi
+  echo "${version//[$'\t\r\n']}"
 }
 
 function runLaTex() {
@@ -75,8 +83,10 @@ function runLaTex() {
   local skipGeneratingPdf="--draftmode" # this is NOT the same as draft mode inside the doc itself
   local latexCommand="\def\customerCode{${customerCode}}"
 
+  echo "Document Version: ${version}" >&2
+
   latexCommand+=" \def\documentName{${documentName}}"
-  latexCommand+=" \def\documentVersion{${version//-/.}}"
+  latexCommand+=" \def\documentVersion{${version}}"
 
   if [[ ${run} -eq 4 ]] ; then
     skipGeneratingPdf=""
@@ -201,13 +211,13 @@ function runMakeIndex() {
 
 function runPandoc() {
 
-  local -r mode="$1"
+# local -r mode="$1"
   local -r customerCode="$2"
   local -r file="$3.tex"
   local -r texFile="${file}"
-  local -r documentName="$(documentName "${file}")"
-  local -r version="$(version "${file}")"
-  local -r jobName=$(jobName "${customerCode}" "${mode}" "${documentName}" "${version}")
+# local -r documentName="$(documentName "${file}")"
+# local -r version="$(version "${file}")"
+# local -r jobName=$(jobName "${customerCode}" "${mode}" "${documentName}" "${version}")
   local -r docxFile="${file/.tex/.pandoc.docx}"
 
   rm -f "${docxFile}" >/dev/null 2>&1
@@ -250,14 +260,8 @@ function runPandoc() {
 
 function cleanTopLevelDocDirectory() {
 
-  local -r docName="$1"
-
-  (
-    cd "${SCRIPT_DIR}/${docName}" || return 1
-
-    rm *.{acn,acr,alg,aux,bbl,bcf,blg,fdb_latexmk,fls,glg,glo,gls,glsdefs,glsdef,idx,labelTags,log,odn,old,olg,pdf,run.xml,synctex.gz,tdn,tld,tlg,tex.bbl,tex.blg,ilg,ind,ist,tdo,log,out,sta,toc,pdf} >/dev/null 2>&1
-    rm -rf .texpadtmp/ >/dev/null 2>&1
-  )
+  rm *.{acn,acr,alg,aux,bbl,bcf,blg,fdb_latexmk,fls,glg,glo,gls,glsdefs,glsdef,idx,labelTags,log,odn,old,olg,pdf,run.xml,synctex.gz,tdn,tld,tlg,tex.bbl,tex.blg,ilg,ind,ist,tdo,log,out,sta,toc,pdf} >/dev/null 2>&1
+  rm -rf .texpadtmp/ >/dev/null 2>&1
 
   return $?
 }
@@ -442,32 +446,6 @@ function docxOutputFileName() {
   echo -n "${customerCodeInFileName} - ${mainFileStripped} - ${mode}.docx"
 }
 
-function copyToOut() {
-
-  return 0
-
-  local -r mode="$1"
-  local -r customerCode="$2"
-  local -r file="$3.tex"
-  local -r documentName="$(documentName "${file}")"
-  local -r version="$(version "${file}")"
-  local -r jobName=$(jobName "${customerCode}" "${mode}" "${documentName}" "${version}")
-
-  local -r customerCodeInFileName="$(getCustomerCodeInFileName "${customerCode}")"
-  local -r pandocDocxFile="${file}.pandoc.docx"
-
-  if [[ ! -f "${mainFile}.pdf" ]] ; then
-    echo "ERROR: Could not find ${mainFile}.pdf"
-    return 1
-  fi
-
-  cp -v "${mainFile}.pdf" "${SCRIPT_DIR}/out/$(pdfOutputFileName $@)"
-
-  if [[ -f "${pandocDocxFile}" ]] ; then
-    cp -v "${pandocDocxFile}" "${SCRIPT_DIR}/out/$(docxOutputFileName $@)"
-  fi
-}
-
 function googleDriveSharedDrivesRoot() {
 
   #
@@ -569,10 +547,10 @@ function runBuildForMode() {
   runLaTex "${mode}" 3 "${customerCode}" "${mainFile}" || return $?
   runMakeIndex "${mode}" "${customerCode}" "${mainFile}" || return $?
   runLaTex "${mode}" 4 "${customerCode}" "${mainFile}" || return $?
+  runLaTex "${mode}" 5 "${customerCode}" "${mainFile}" || return $?
 
 #  runPandoc "${mode}" "${customerCode}" "${mainFile}" || return $?
 
-#  copyToOut "${mode}" "${customerCode}" "${mainFile}" || return $?
 #  copyToGoogleDriveLocal "${mode}" "${customerCode}" "${mainFile}" || return $?
 
   return 0
@@ -650,12 +628,9 @@ function runTheBuild() {
     return 1
   fi
 
-  if [[ ! -f "${mainDir}/${mainFile}.tex" ]] ; then
-    if [[ ! -f "${mainFile}.tex" ]] ; then
-      echo "ERROR: Could not find ${mainFile}/${mainFile}.tex"
-      return 1
-    fi
-    mainDir="$(pwd)"
+  if [[ ! -f "${mainFile}.tex" ]] ; then
+    echo "ERROR: Could not find ${mainFile}/${mainFile}.tex" >&2
+    return 1
   fi
 
   if ((useLocalLaTeX)) ; then
@@ -665,39 +640,38 @@ function runTheBuild() {
         installFontsInDarwin || return $?
       fi
     else
-      echo "ERROR: Could not find lualatex on your PATH"
+      echo "ERROR: Could not find lualatex on your PATH" >&2
       return 1
     fi
   elif isRunningInDockerContainer ; then
-    echo "Running in the docker container"
+    echo "Running in the docker container" >&2
     installFontsInLinux || return $?
   elif [[ "$(uname)" == "Darwin" ]] || [[ "$(uname)" == "Linux" ]]  ; then
     runInDocker "${customerCode}"
     return $?
   else
-    echo "Running on an unknown platform"
+    echo "ERROR: Running on an unknown platform" >&2
     return 1
   fi
 
   runInkScape || return $?
 
-  cleanTopLevelDocDirectory "${mainFile}" || return $?
+  (
+    cd ..
+    cleanTopLevelDocDirectory "${mainFile}" || return $?
+  ) || return $?
 
-  {
-    cd "${mainDir}" || return $?
-
-    if ((buildDraftVersion)) && ((buildFinalVersion)) ; then
-      runBuildForMode draft "${customerCode}" "${mainFile}" || return $?
-      runBuildForMode final "${customerCode}" "${mainFile}" || return $?
-      openPdf draft "${customerCode}" "${mainFile}"
-    elif ((buildFinalVersion)) ; then
-      runBuildForMode final "${customerCode}" "${mainFile}" || return $?
-      openPdf final "${customerCode}" "${mainFile}"
-    else
-      runBuildForMode draft "${customerCode}" "${mainFile}" || return $?
-      openPdf draft "${customerCode}" "${mainFile}"
-    fi
-  }
+  if ((buildDraftVersion)) && ((buildFinalVersion)) ; then
+    runBuildForMode draft "${customerCode}" "${mainFile}" || return $?
+    runBuildForMode final "${customerCode}" "${mainFile}" || return $?
+    openPdf draft "${customerCode}" "${mainFile}"
+  elif ((buildFinalVersion)) ; then
+    runBuildForMode final "${customerCode}" "${mainFile}" || return $?
+    openPdf final "${customerCode}" "${mainFile}"
+  else
+    runBuildForMode draft "${customerCode}" "${mainFile}" || return $?
+    openPdf draft "${customerCode}" "${mainFile}"
+  fi
 
   return $?
 }
